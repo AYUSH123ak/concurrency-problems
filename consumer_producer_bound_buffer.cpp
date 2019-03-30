@@ -1,10 +1,16 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+void semaphore_signal_produced();
+void semaphore_signal_consumed();
+void semaphore_wait_full();
+void semaphore_wait_empty();
+
+
 int last_item_produced=0;
 int last_item_consumed=1;
 int buffer_limit=5;
-int to=0;  // number of  items in buffer
+int total=0;  // number of  items in buffer
 int s=50;  // limited the output to 50 enteries 
 mutex mu;  // for practical demostration of the running of program
 int m=0;   // m is used to keep track of critical section 
@@ -13,17 +19,13 @@ void producer()
 	string str;
 	while(s>0){
 		--s;
-		while(m);
+		semaphore_wait_full();
 		mu.lock();
-		m=1;
-		if(to==buffer_limit)
-			str = "Buffer full "+to_string(to)+ " items in buffer\n";
-		else{
-			++to;
-			str = "Item " + to_string(++last_item_produced) + " produced "+to_string(to)+ " items in buffer\n";
-		}
+		
+		str = "Item " + to_string(++last_item_produced) + " produced "+to_string(total+1)+ " items in buffer\n";
 		cout << str;
-		m=0;
+		
+		semaphore_signal_produced();
 		mu.unlock();
 	}
 }
@@ -32,19 +34,35 @@ void consumer()
 	string str;
 	while(s>0){
 		--s;
-		while(m);
+		semaphore_wait_empty();
 		mu.lock();
-		m=1;
-		if(last_item_consumed==last_item_produced+1)
-			str = "Buffer empty 0 items in buffer\n";
-		else{
-			--to;
-			str = "Item " + to_string(last_item_consumed++) + " consumed "+to_string(to)+ " items in buffer\n";
-		}
-		m=0;
+		
+		str = "Item " + to_string(last_item_consumed++) + " consumed "+to_string(total-1)+ " items in buffer\n";
 		cout << str;
+		
+		semaphore_signal_consumed();
 		mu.unlock();
 	}
+}
+void semaphore_wait_full()
+{
+	while(m||total==buffer_limit);
+	m=1;
+}
+void semaphore_wait_empty()
+{
+	while(m||total==0);
+	m=1;
+}
+void semaphore_signal_produced()
+{
+	m=0;
+	total++;
+}
+void semaphore_signal_consumed()
+{
+	m=0;
+	total--;
 }
 signed main()
 {
