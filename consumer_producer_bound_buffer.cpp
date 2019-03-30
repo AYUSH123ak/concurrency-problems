@@ -3,6 +3,8 @@ using namespace std;
 
 int last_item_produced=0;
 int last_item_consumed=1;
+int buffer_limit=5;
+int to=0;  // number of  items in buffer
 int s=50;  // limited the output to 50 enteries 
 mutex mu;  // for practical demostration of the running of program
 int m=0;   // m is used to keep track of critical section 
@@ -14,7 +16,12 @@ void producer()
 		while(m);
 		mu.lock();
 		m=1;
-		str = "Item " + to_string(++last_item_produced) + " produced\n";
+		if(to==buffer_limit)
+			str = "Buffer full "+to_string(to)+ " items in buffer\n";
+		else{
+			++to;
+			str = "Item " + to_string(++last_item_produced) + " produced "+to_string(to)+ " items in buffer\n";
+		}
 		cout << str;
 		m=0;
 		mu.unlock();
@@ -29,9 +36,11 @@ void consumer()
 		mu.lock();
 		m=1;
 		if(last_item_consumed==last_item_produced+1)
-			str = "Buffer empty\n";
-		else
-			str = "Item " + to_string(last_item_consumed++) + " consumed\n";
+			str = "Buffer empty 0 items in buffer\n";
+		else{
+			--to;
+			str = "Item " + to_string(last_item_consumed++) + " consumed "+to_string(to)+ " items in buffer\n";
+		}
 		m=0;
 		cout << str;
 		mu.unlock();
